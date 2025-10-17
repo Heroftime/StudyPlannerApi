@@ -29,5 +29,13 @@ namespace StudyPlannerApi.Controllers
             })
             .ToArray();
         }
+    
+
+    [HttpGet("hello", Name = "GetHelloWorld")]
+        public int GetHelloWorld()
+        {
+            return 200;
+        }
     }
 }
+
