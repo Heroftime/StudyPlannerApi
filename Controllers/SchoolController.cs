@@ -5,11 +5,21 @@ using StudyPlannerApi.Models;
 
 namespace StudyPlannerApi.Controllers
 {
-    public class SchoolController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class SchoolController : ControllerBase
     {
-        public IActionResult Index()
+        private readonly ApplicationDbContext _context;
+
+        public SchoolController(ApplicationDbContext context)
         {
-            return View();
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<School>>> GetSchools()
+        {
+            return await _context.Schools.ToListAsync();
         }
     }
 }

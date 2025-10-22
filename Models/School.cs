@@ -11,7 +11,7 @@ namespace StudyPlannerApi.Models
         public string Name { get; set; } = string.Empty;
 
         [Required, StringLength(500)]
-        public string Address { get; set; } = string.   Empty;
+        public string Address { get; set; } = string.Empty;
 
     }
 }
