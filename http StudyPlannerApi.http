@@ -1,0 +1,35 @@
+@StudyPlannerApi_HostAddress = http://localhost:5297
+
+### Get all courses
+GET {{StudyPlannerApi_HostAddress}}/api/Courses
+Accept: application/json
+
+### Get a specific course by ID
+GET {{StudyPlannerApi_HostAddress}}/api/Courses/2
+Accept: application/json
+
+### Create a new course
+POST {{StudyPlannerApi_HostAddress}}/api/Courses
+Content-Type: application/json
+
+{
+  "name": "Introduction to Computer Science",
+  "description": "Fundamentals of programming and computer systems",
+  "credits": 3,
+  "semester": "Fall 2023"
+}
+
+### Update an existing course
+PUT {{StudyPlannerApi_HostAddress}}/api/Courses/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "name": "Advanced Computer Science",
+  "description": "In-depth study of algorithms and data structures",
+  "credits": 4,
+  "semester": "Spring 2024"
+}
+
+### Delete a course
+DELETE {{StudyPlannerApi_HostAddress}}/api/Courses/1
