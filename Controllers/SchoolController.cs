@@ -65,12 +65,12 @@ namespace StudyPlannerApi.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<School>> PostCourse(School school)
+        public async Task<ActionResult<School>> PostSchool(School school)
         {
             _context.Schools.Add(school);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetCourse", new { id = school.Id }, school);
+            return CreatedAtAction("GetSchool", new { id = school.Id }, school);
         }
 
         [HttpDelete("{id}")]
@@ -93,7 +93,7 @@ namespace StudyPlannerApi.Controllers
 
         private bool SchoolExists(int id)
             {
-              return _context.Courses.Any(e => e.Id == id);
+              return _context.Schools.Any(e => e.Id == id);
             }
 
 
