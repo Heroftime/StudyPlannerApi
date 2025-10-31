@@ -90,6 +90,37 @@ namespace StudyPlannerApi.Controllers
             });
         }
 
+
+        [HttpPost("PoeticCourse/{id}")]
+        public async Task<ActionResult<string>> PoeticCourse(int id)
+        {
+            var course = await _context.Courses.FindAsync(id);
+
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            var chatService = _kernel.GetRequiredService<IChatCompletionService>();
+            var chatHistory = new ChatHistory();
+
+            var prompt = $"Can you write me a short poem for the course subject {course.Name}";
+                   
+
+            chatHistory.AddUserMessage(prompt);
+
+            var response = await chatService.GetChatMessageContentAsync(chatHistory);
+
+            return Ok(new
+            {
+                courseId = course.Id,
+                courseName = course.Name,
+                analysis = response.Content
+            });
+        }
+
+
+
         // POST: api/Ollama/SuggestStudyPlan
         [HttpPost("SuggestStudyPlan")]
         public async Task<ActionResult<string>> SuggestStudyPlan([FromBody] StudyPlanRequest request)

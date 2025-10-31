@@ -15,7 +15,7 @@ builder.Services.AddSingleton<Kernel>(sp =>
 {
     var kernelBuilder = Kernel.CreateBuilder();
     kernelBuilder.AddOllamaChatCompletion(
-        modelId: "llama3.2:latest", 
+        modelId: "llama3.2", 
         endpoint: new Uri("http://localhost:11434")
     );
     return kernelBuilder.Build();
