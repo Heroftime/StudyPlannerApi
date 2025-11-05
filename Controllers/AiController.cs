@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
-using Microsoft.SemanticKernel.Connectors.Ollama;
 using StudyPlannerApi.Data;
 using StudyPlannerApi.Models;
 
@@ -26,7 +25,7 @@ namespace StudyPlannerApi.Controllers
             _kernel = kernel;
         }
 
-        // POST: api/Ollama/GenerateCourseDescription
+        // POST: api/Ai/GenerateCourseDescription
         [HttpPost("GenerateCourseDescription")]
         public async Task<ActionResult<string>> GenerateCourseDescription([FromBody] CourseDescriptionRequest request)
         {
@@ -56,7 +55,7 @@ namespace StudyPlannerApi.Controllers
             return Ok(new { description = response.Content });
         }
 
-        // POST: api/Ollama/AnalyzeCourse/{id}
+        // POST: api/Ai/AnalyzeCourse/{id}
         [HttpPost("AnalyzeCourse/{id}")]
         public async Task<ActionResult<string>> AnalyzeCourse(int id)
         {
@@ -89,37 +88,6 @@ namespace StudyPlannerApi.Controllers
                 analysis = response.Content
             });
         }
-
-
-        [HttpPost("PoeticCourse/{id}")]
-        public async Task<ActionResult<string>> PoeticCourse(int id)
-        {
-            var course = await _context.Courses.FindAsync(id);
-
-            if (course == null)
-            {
-                return NotFound();
-            }
-
-            var chatService = _kernel.GetRequiredService<IChatCompletionService>();
-            var chatHistory = new ChatHistory();
-
-            var prompt = $"Can you write me a short poem for the course subject {course.Name}";
-                   
-
-            chatHistory.AddUserMessage(prompt);
-
-            var response = await chatService.GetChatMessageContentAsync(chatHistory);
-
-            return Ok(new
-            {
-                courseId = course.Id,
-                courseName = course.Name,
-                analysis = response.Content
-            });
-        }
-
-
 
         // POST: api/Ollama/SuggestStudyPlan
         [HttpPost("SuggestStudyPlan")]
@@ -162,7 +130,77 @@ namespace StudyPlannerApi.Controllers
             });
         }
 
-        // POST: api/Ollama/Chat
+        // POST: api/Ai/GenerateTimePlanner
+        [HttpPost("GenerateTimePlanner")]
+        public async Task<ActionResult<string>> GenerateTimePlanner([FromBody] TimePlannerRequest request)
+        {
+            if (request.SubjectTimeData == null || !request.SubjectTimeData.Any())
+            {
+                return BadRequest("At least one subject with time data is required.");
+            }
+
+            var subjectIds = request.SubjectTimeData.Select(s => s.SubjectId).ToList();
+            var subjects = await _context.Subjects
+                .Where(s => subjectIds.Contains(s.Id))
+                .ToListAsync();
+
+            if (!subjects.Any()) // If there are no subjects in the database
+            {
+                return NotFound("No subjects found with the provided IDs.");
+            }
+
+            var chatService = _kernel.GetRequiredService<IChatCompletionService>();
+            var chatHistory = new ChatHistory();
+
+            var subjectDetails = request.SubjectTimeData.Select(std =>
+            {
+                var subject = subjects.FirstOrDefault(s => s.Id == std.SubjectId);
+                var avgTime = std.AverageTimeInMinutes ?? subject?.AverageTimeInMinutes ?? 60;
+                return new
+                {
+                    Name = subject?.Name ?? "Unknown Subject",
+                    TimeInMinutes = avgTime,
+                    Description = subject?.Description
+                };
+            }).ToList();
+
+            var subjectList = string.Join("\n", subjectDetails.Select(s =>
+                $"- {s.Name}: {s.TimeInMinutes} minutes per session" + 
+                (string.IsNullOrWhiteSpace(s.Description) ? "" : $" ({s.Description})")));
+
+            var totalTimePerDay = subjectDetails.Sum(s => s.TimeInMinutes);
+            var hoursAvailable = request.HoursAvailablePerDay ?? 8;
+            var daysPerWeek = request.DaysPerWeek ?? 5;
+
+            var prompt = $"Create a personalized study planner based on the following subject time requirements:\n\n" +
+                        $"{subjectList}\n\n" +
+                        $"Total study time needed per cycle: {totalTimePerDay} minutes ({totalTimePerDay / 60.0:F1} hours)\n" +
+                        $"Available hours per day: {hoursAvailable}\n" +
+                        $"Days per week: {daysPerWeek}\n" +
+                        $"Planning period: {request.WeeksToSchedule ?? 4} weeks\n\n" +
+                        $"Generate a realistic and balanced study schedule that:\n" +
+                        $"1. Distributes study time effectively across all subjects\n" +
+                        $"2. Accounts for the time each subject requires\n" +
+                        $"3. Includes breaks and prevents burnout\n" +
+                        $"4. Suggests optimal times for different subjects based on complexity\n" +
+                        $"5. Provides daily and weekly study breakdowns";
+
+            chatHistory.AddUserMessage(prompt);
+
+            var response = await chatService.GetChatMessageContentAsync(chatHistory);
+
+            return Ok(new
+            {
+                totalSubjects = subjects.Count,
+                totalTimeRequired = totalTimePerDay,
+                averageTimePerSubject = totalTimePerDay / Math.Max(1, subjectDetails.Count),
+                hoursAvailablePerDay = hoursAvailable,
+                daysPerWeek = daysPerWeek,
+                studyPlanner = response.Content
+            });
+        }
+
+        // POST: api/Ai/Chat
         [HttpPost("Chat")]
         public async Task<ActionResult<string>> Chat([FromBody] ChatRequest request)
         {
@@ -186,7 +224,7 @@ namespace StudyPlannerApi.Controllers
             });
         }
 
-        // GET: api/Ollama/Status
+        // GET: api/Ai/Status
         [HttpGet("Status")]
         public async Task<ActionResult<object>> GetStatus()
         {
@@ -201,9 +239,10 @@ namespace StudyPlannerApi.Controllers
                 return Ok(new
                 {
                     status = "Connected",
-                    endpoint = "http://localhost:11434",
-                    model = "llama3.2",
-                    message = "Ollama connection is active"
+                    provider = "OpenAI",
+                    model = "gpt-4o-mini",
+                    message = "ChatGPT connection is active",
+                    testResponse = response.Content
                 });
             }
             catch (Exception ex)
@@ -211,7 +250,7 @@ namespace StudyPlannerApi.Controllers
                 return StatusCode(500, new
                 {
                     status = "Error",
-                    message = "Failed to connect to Ollama",
+                    message = "Failed to connect to ChatGPT API",
                     error = ex.Message
                 });
             }
@@ -235,5 +274,22 @@ namespace StudyPlannerApi.Controllers
     public class ChatRequest
     {
         public string Message { get; set; } = string.Empty;
+    }
+
+    public class TimePlannerRequest
+    {
+        public List<SubjectTimeData> SubjectTimeData { get; set; } = new List<SubjectTimeData>();
+        public int? HoursAvailablePerDay { get; set; } = 8;
+        public int? DaysPerWeek { get; set; } = 5;
+        public int? WeeksToSchedule { get; set; } = 4;
+    }
+
+    public class SubjectTimeData
+    {
+        public int SubjectId { get; set; }
+        /// <summary>
+        /// Override the subject's default average time if provided
+        /// </summary>
+        public int? AverageTimeInMinutes { get; set; }
     }
 }

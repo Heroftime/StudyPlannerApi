@@ -10,13 +10,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Add Semantic Kernel services
+// Add Semantic Kernel services with OpenAI
+var openAiApiKey = builder.Configuration["OpenAI:ApiKey"] 
+    ?? throw new InvalidOperationException("OpenAI API Key not found in configuration");
+var openAiModel = builder.Configuration["OpenAI:Model"] ?? "gpt-4o-mini";
+
 builder.Services.AddSingleton<Kernel>(sp =>
 {
     var kernelBuilder = Kernel.CreateBuilder();
-    kernelBuilder.AddOllamaChatCompletion(
-        modelId: "llama3.2", 
-        endpoint: new Uri("http://localhost:11434")
+    kernelBuilder.AddOpenAIChatCompletion(
+        modelId: openAiModel, 
+        apiKey: openAiApiKey
     );
     return kernelBuilder.Build();
 });

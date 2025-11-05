@@ -15,5 +15,7 @@ namespace StudyPlannerApi.Data
         public DbSet<Course> Courses { get; set; }
 
         public DbSet<School> Schools { get; set; }
+
+        public DbSet<Subject> Subjects { get; set; }
     }
-}                                                                                                   
+}     
