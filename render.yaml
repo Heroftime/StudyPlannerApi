@@ -12,9 +12,13 @@ services:
       - key: ASPNETCORE_URLS
         value: http://+:8080
       - key: ConnectionStrings__DefaultConnection
-        sync: false # You'll set this in Render dashboard
+        sync: false # Set this in Render dashboard with your PostgreSQL connection string
+        # Format: postgresql://user:password@host/database
+        # OR: Host=host;Database=db;Username=user;Password=pass;SSL Mode=Require;Trust Server Certificate=true
+      - key: ApiKey
+        sync: false # Set this in Render dashboard with a secure API key (32+ characters recommended)
       - key: OpenAI__ApiKey
-        sync: false # You'll set this in Render dashboard
+        sync: false # Set this in Render dashboard with your OpenAI API key
       - key: OpenAI__Model
         value: gpt-4o-mini
     healthCheckPath: /api/Home
