@@ -181,6 +181,7 @@ namespace StudyPlannerApi.Controllers
                                    string.Join("\n", assignments.Select((a, index) => $"{index + 1}. {a}"));
             }
 
+            // AI Prompt
             var prompt = $"Create a personalized study planner based on the following subject time requirements:\n\n" +
                         $"{subjectList}\n\n" +
                         $"Total study time needed per cycle: {totalTimePerDay} minutes ({totalTimePerDay / 60.0:F1} hours)\n" +
