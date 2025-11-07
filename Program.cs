@@ -9,26 +9,37 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+// Flag to track if we're using PostgreSQL
+bool isPostgreSQL = false;
+
+
+
 // Convert PostgreSQL URI format to standard format if needed
 if (!string.IsNullOrEmpty(connectionString) && connectionString.StartsWith("postgresql://"))
 {
     connectionString = ConvertPostgresUriToConnectionString(connectionString);
+    isPostgreSQL = true; // We know it's PostgreSQL if it started with postgresql://
+}
+else if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    isPostgreSQL = true; // Also check for "postgres" in the string
 }
 
-// Support both SQL Server and PostgreSQL based on connection string
-if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
+// Configure database context based on the connection string
+if (string.IsNullOrEmpty(connectionString))
+{
+    throw new InvalidOperationException("Database connection string is not configured.");
+}
+
+if (isPostgreSQL)
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseNpgsql(connectionString));
 }
-else if (!string.IsNullOrEmpty(connectionString))
+else
 {
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(connectionString));
-}
-else
-{
-    throw new InvalidOperationException("Database connection string is not configured.");
 }
 
 // Add Semantic Kernel services with OpenAI

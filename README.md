@@ -174,7 +174,7 @@ X-API-Key: your-api-key-here
 
 **cURL:**
 ```bash
-curl -H "X-API-Key: jYqQ0fKhe6kwyuFz83ZiWnPUHb17gD2A" \
+curl -H "X-API-Key: YOUR_API_KEY_HERE" \
   https://your-service.onrender.com/api/Courses
 ```
 
@@ -182,7 +182,7 @@ curl -H "X-API-Key: jYqQ0fKhe6kwyuFz83ZiWnPUHb17gD2A" \
 ```javascript
 fetch('https://your-service.onrender.com/api/Courses', {
   headers: {
-    'X-API-Key': 'jYqQ0fKhe6kwyuFz83ZiWnPUHb17gD2A'
+    'X-API-Key': 'YOUR_API_KEY_HERE'
   }
 })
 ```
@@ -190,7 +190,7 @@ fetch('https://your-service.onrender.com/api/Courses', {
 **C# HttpClient:**
 ```csharp
 var client = new HttpClient();
-client.DefaultRequestHeaders.Add("X-API-Key", "jYqQ0fKhe6kwyuFz83ZiWnPUHb17gD2A");
+client.DefaultRequestHeaders.Add("X-API-Key", "YOUR_API_KEY_HERE");
 var response = await client.GetAsync("https://your-service.onrender.com/api/Courses");
 ```
 
