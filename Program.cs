@@ -7,13 +7,30 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+// Support both SQL Server and PostgreSQL based on connection string
+if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseNpgsql(connectionString));
+}
+else if (!string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
+else
+{
+    throw new InvalidOperationException("Database connection string is not configured.");
+}
 
 // Add Semantic Kernel services with OpenAI
-var openAiApiKey = builder.Configuration["OpenAI:ApiKey"] 
-    ?? throw new InvalidOperationException("OpenAI API Key not found in configuration");
+var openAiApiKey = builder.Configuration["OpenAI:ApiKey"];
 var openAiModel = builder.Configuration["OpenAI:Model"] ?? "gpt-4o-mini";
+
+if (string.IsNullOrEmpty(openAiApiKey))
+{
+    throw new InvalidOperationException("OpenAI API Key is not configured. Set OpenAI:ApiKey in configuration.");
+}
 
 builder.Services.AddSingleton<Kernel>(sp =>
 {
@@ -31,6 +48,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add CORS for production (if you have a frontend)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -39,6 +67,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    // Also enable Swagger in production for Render (optional - remove if you don't want it)
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+// Use CORS
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 

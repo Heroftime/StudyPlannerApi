@@ -1,83 +1,35 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace StudyPlannerApi.Controllers
 {
-    public class HomeController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class HomeController : ControllerBase
     {
-        // GET: HomeController
-        public ActionResult Index()
+        // GET: api/Home
+        [HttpGet]
+        public IActionResult Index()
         {
-            return View();
-        }
-
-        // GET: HomeController/Details/5
-        public ActionResult Details(int id)
-        {
-            return View();
-        }
-
-        // GET: HomeController/Create
-        public ActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: HomeController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
+            return Ok(new
             {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+                status = "OK",
+                message = "Study Planner API is running",
+                timestamp = DateTime.UtcNow,
+                version = "1.0.0"
+            });
         }
 
-        // GET: HomeController/Edit/5
-        public ActionResult Edit(int id)
+        // GET: api/Home/Health
+        [HttpGet("Health")]
+        public IActionResult Health()
         {
-            return View();
-        }
-
-        // POST: HomeController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
+            return Ok(new
             {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: HomeController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: HomeController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+                status = "Healthy",
+                service = "Study Planner API",
+                uptime = Environment.TickCount64 / 1000, // seconds since start
+                timestamp = DateTime.UtcNow
+            });
         }
     }
 }

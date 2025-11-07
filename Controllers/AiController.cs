@@ -172,18 +172,51 @@ namespace StudyPlannerApi.Controllers
             var hoursAvailable = request.HoursAvailablePerDay ?? 8;
             var daysPerWeek = request.DaysPerWeek ?? 5;
 
+            // Handle assignments - limit to 10 if more are provided
+            var assignments = request.Assignments?.Take(10).ToList() ?? new List<string>();
+            var assignmentSection = "";
+            if (assignments.Any())
+            {
+                assignmentSection = $"\n\nUpcoming Assignments to schedule:\n" + 
+                                   string.Join("\n", assignments.Select((a, index) => $"{index + 1}. {a}"));
+            }
+
             var prompt = $"Create a personalized study planner based on the following subject time requirements:\n\n" +
                         $"{subjectList}\n\n" +
                         $"Total study time needed per cycle: {totalTimePerDay} minutes ({totalTimePerDay / 60.0:F1} hours)\n" +
                         $"Available hours per day: {hoursAvailable}\n" +
                         $"Days per week: {daysPerWeek}\n" +
-                        $"Planning period: {request.WeeksToSchedule ?? 4} weeks\n\n" +
+                        $"Planning period: {request.WeeksToSchedule ?? 4} weeks" +
+                        $"{assignmentSection}\n\n" +
                         $"Generate a realistic and balanced study schedule that:\n" +
                         $"1. Distributes study time effectively across all subjects\n" +
                         $"2. Accounts for the time each subject requires\n" +
                         $"3. Includes breaks and prevents burnout\n" +
                         $"4. Suggests optimal times for different subjects based on complexity\n" +
-                        $"5. Provides daily and weekly study breakdowns";
+                        $"5. Provides daily and weekly study breakdowns" +
+                        (assignments.Any() ? "\n6. References and schedules time for the specific assignments listed above\n" : "\n") +
+                        $"\n?????????????????????????????????\n" +
+                        $"CRITICAL FORMATTING REQUIREMENTS - YOU MUST FOLLOW THESE:\n" +
+                        $"?????????????????????????????????\n\n" +
+                        $"1. ABSOLUTELY NO MARKDOWN: Do not use ** for bold, do not use ## for headers, do not use * for lists, do not use ``` for code blocks, do not use | for tables\n" +
+                        $"2. Use PLAIN TEXT ONLY with emojis for visual appeal\n" +
+                        $"3. For section separators, use this exact line: ?????????????????????????????????\n" +
+                        $"4. Use emojis GENEROUSLY throughout (at least 20-30 emojis total):\n" +
+                        $"   - For subjects: ?? ?? ?? ?? ?? ?? ?? ?? ?? ??\n" +
+                        $"   - For time/schedule: ? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ???\n" +
+                        $"   - For breaks/rest: ? ?? ?? ??? ?? ?? ?? ??\n" +
+                        $"   - For activities: ?? ?? ????? ?? ? ?? ?? ?? ??\n" +
+                        $"   - For days: ?? ??? ?? ?\n" +
+                        $"5. Structure each day like this example:\n\n" +
+                        $"?????????????????????????????????\n" +
+                        $"?? MONDAY - Week 1\n" +
+                        $"?????????????????????????????????\n" +
+                        $"? 9:00 AM - 10:30 AM ? ?? Computer Science (90 min)\n" +
+                        $"? 10:30 AM - 10:45 AM ? ? Quick Break (15 min)\n" +
+                        $"? 10:45 AM - 12:15 PM ? ?? Subject Name (90 min)\n\n" +
+                        $"6. Make it colorful, engaging, and FUN to read!\n" +
+                        $"7. Keep all text clean and readable - no asterisks, no pound signs, no special markdown symbols\n" +
+                        $"8. Use simple dashes or arrows (?) instead of complex tables";
 
             chatHistory.AddUserMessage(prompt);
 
@@ -196,6 +229,7 @@ namespace StudyPlannerApi.Controllers
                 averageTimePerSubject = totalTimePerDay / Math.Max(1, subjectDetails.Count),
                 hoursAvailablePerDay = hoursAvailable,
                 daysPerWeek = daysPerWeek,
+                totalAssignments = assignments.Count,
                 studyPlanner = response.Content
             });
         }
@@ -282,6 +316,10 @@ namespace StudyPlannerApi.Controllers
         public int? HoursAvailablePerDay { get; set; } = 8;
         public int? DaysPerWeek { get; set; } = 5;
         public int? WeeksToSchedule { get; set; } = 4;
+        /// <summary>
+        /// Optional list of assignment names to include in the planner. Limited to 10 assignments.
+        /// </summary>
+        public List<string>? Assignments { get; set; }
     }
 
     public class SubjectTimeData
